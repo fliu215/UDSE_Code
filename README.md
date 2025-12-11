@@ -15,4 +15,11 @@ These results demonstrate the superior universality and practicality of UDSE com
 **We provide our implementation as open source in this repository. Audio samples can be found at the [demo website](https://fliu215.github.io/UDSE/).**
 
 ## Model Structure
+### Train
 ![model](figures/train.png)
+### Inference
+![model](figures/inference.png)
+
+## Pre-requisites
+0. Python >= 3.9.
+0. Clone this repository.
