@@ -13,3 +13,6 @@ Experimental results confirm that the proposed UDSE model can effectively enhanc
 These results demonstrate the superior universality and practicality of UDSE compared to advanced regression-based SE methods.
 
 **We provide our implementation as open source in this repository. Audio samples can be found at the [demo website](https://fliu215.github.io/UDSE/).**
+
+## Model Structure
+![model](figures/train.pdf)
