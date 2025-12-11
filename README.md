@@ -21,5 +21,5 @@ These results demonstrate the superior universality and practicality of UDSE com
 ![model](figures/inference.png)
 
 ## Pre-requisites
-0. Python >= 3.9.
-0. Clone this repository.
+1. Python >= 3.9.
+2. Clone this repository.
