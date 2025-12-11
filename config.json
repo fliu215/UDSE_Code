@@ -1,0 +1,39 @@
+{
+    "num_gpus": 2,
+    "batch_size": 2,
+    "learning_rate": 0.0001,
+    "adam_b1": 0.9,
+    "adam_b2": 0.95,
+    "lr_decay": 0.9,
+    "seed": 1234,
+    
+    "num_quantize": 9,
+    "codebook_size": 1024, 
+    "num_tsconformers": 4,
+    "beta": 2.0,
+
+    "sampling_rate": 44100,
+    "segment_size": 80000,
+
+    "num_workers": 4,
+
+    "training_epochs":100,
+    "stdout_interval":5,
+    "checkpoint_interval": 10000,
+    "summary_interval": 100,
+    "validation_interval": 10000,
+
+    "fs": 44100,
+    "input_train_clean_list": "./mnt230/data/voice_bank/clean_trainset_wav_44.1k",
+    "input_train_noise_list": "./mnt230/data/voice_bank/noisy_trainset_wav_44.1k",
+    "input_validation_clean_list": "./mnt230/data/voice_bank/clean_testset_wav_44.1k",
+    "input_validation_noise_list": "./mnt230/data/voice_bank/noisy_testset_wav_44.1k",
+    "checkpoint_path": "./mnt230/checkpoint/genhancer-44.1k-embedding_final_cut",
+    "checkpoint_file": "./mnt230/checkpoint/genhancer-44.1k-embedding_final_cut/g_00640000",
+
+    "dist_config": {
+        "dist_backend": "nccl",
+        "dist_url": "tcp://localhost:54321",
+        "world_size": 1
+    }
+}
