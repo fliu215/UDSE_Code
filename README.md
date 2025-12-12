@@ -38,5 +38,10 @@ CUDA_VISIBLE_DEVICES=0 python train.py
 
 ## Inference
 ```
-CUDA_VISIBLE_DEVICES=0 python inference.py
+CUDA_VISIBLE_DEVICES=0 python inference.py --test_noise_wav your/path --output_dir save/path
 ```
+
+## Acknowledgements
+We referred to [HiFiGAN](https://github.com/jik876/hifi-gan) and [CMGAN](https://github.com/ruizhecao96/CMGAN) to implement this.
+
+## Citation
