@@ -1,5 +1,6 @@
 # Universal Discrete-Domain Speech Enhancement
 ### Fei Liu, Yang Ai, Ye-Xin Lu, Rui-Chen Zheng, Hui-Peng Du, Zhen-Hua Ling
+[![arXiv](https://img.shields.io/badge/arXiv-2510.09974-brightgreen.svg?style=flat-square)](https://arxiv.org/abs/2510.09974)  
 
 **Abstract:** 
 In real-world scenarios, speech signals are inevitably corrupted by various types of interference, making speech enhancement (SE) a critical task for robust speech processing. 
