@@ -31,7 +31,7 @@ def train(rank, a, h):
     device = torch.device('cuda:{:d}'.format(rank))
 
     generator = UDSE()
-    dac_model = dac.DAC.load('/home/aiyang/.cache/descript/dac/weights_44khz_8kbps_0.0.1.pth')
+    dac_model = dac.DAC.load('.cache/descript/dac/weights_44khz_8kbps_0.0.1.pth')
     dac_model.to(device)
 
 
