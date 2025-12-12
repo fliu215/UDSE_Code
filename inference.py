@@ -91,8 +91,8 @@ def main():
     print('Initializing Inference Process..')
 
     parser = argparse.ArgumentParser()
-    parser.add_argument('--test_noise_wav', default='/train/aiyang/data/voice_bank/noisy_testset_wav_44.1k')
-    parser.add_argument('--output_dir', default='/train/aiyang/data/genhancer/UDSE/')
+    parser.add_argument('--test_noise_wav', default='data/voice_bank/noisy_testset_wav_44.1k')
+    parser.add_argument('--output_dir', default='UDSE/')
     a = parser.parse_args()
 
     config_file = 'config.json'
