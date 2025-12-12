@@ -20,7 +20,23 @@ These results demonstrate the superior universality and practicality of UDSE com
 ![model](figures/train.png)
 ### Inference
 ![model](figures/inference.png)
-
 ## Pre-requisites
-1. Python >= 3.9.
-2. Clone this repository.
+1. Clone this repository.
+2. Install requirements.
+```
+conda create -n udse python=3.9
+conda activate udse
+cd UDSE_Code
+pip install -r requirements.txt
+```
+3. Download and extract the [VoiceBank+DEMAND dataset](https://datashare.ed.ac.uk/handle/10283/1942). Resample all wav files to 44.1 kHz.
+
+## Training
+```
+CUDA_VISIBLE_DEVICES=0 python train.py
+```
+
+## Inference
+```
+CUDA_VISIBLE_DEVICES=0 python inference.py
+```
