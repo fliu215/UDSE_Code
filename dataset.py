@@ -32,30 +32,6 @@ def mel_spectrogram(y, n_fft=400, num_mels=80, sampling_rate=8000, hop_size=100,
     spec = spectral_normalize_torch(spec)
     return spec #[batch_size,n_fft/2+1,frames]
 
-def mag_pha_stft(y, n_fft, hop_size, win_size, compress_factor=1.0, center=True):
-
-    hann_window = torch.hann_window(win_size).to(y.device)
-    stft_spec = torch.stft(y, n_fft, hop_length=hop_size, win_length=win_size, window=hann_window,
-                           center=center, pad_mode='reflect', normalized=False, return_complex=True)
-    stft_spec = torch.view_as_real(stft_spec)
-    mag = torch.sqrt(stft_spec.pow(2).sum(-1)+(1e-9))
-    pha = torch.atan2(stft_spec[:, :, :, 1]+(1e-10), stft_spec[:, :, :, 0]+(1e-5))
-    # Magnitude Compression
-    mag = torch.pow(mag, compress_factor)
-    com = torch.stack((mag*torch.cos(pha), mag*torch.sin(pha)), dim=-1)
-
-    return mag, pha, com
-
-
-def mag_pha_istft(mag, pha, n_fft, hop_size, win_size, compress_factor=1.0, center=True):
-    # Magnitude Decompression
-    mag = torch.pow(mag, (1.0/compress_factor))
-    com = torch.complex(mag*torch.cos(pha), mag*torch.sin(pha))
-    hann_window = torch.hann_window(win_size).to(com.device)
-    wav = torch.istft(com, n_fft, hop_length=hop_size, win_length=win_size, window=hann_window, center=center)
-
-    return wav
-
 
 def get_dataset_filelist(input_clean_wav_list, input_noisy_wav_list):
     clean_files=[]
@@ -72,15 +48,6 @@ def get_dataset_filelist(input_clean_wav_list, input_noisy_wav_list):
         noisy_files.append(src)
 
     return clean_files, noisy_files
-
-# def get_dataset_filelist(input_clean_file, input_noise_file):
-#     with open(input_clean_file, 'r', encoding='utf-8') as fi:
-#         clean_indexes = [x.split(' ')[-1] for x in fi.read().split('\n') if len(x) > 0]
-
-#     with open(input_noise_file, 'r', encoding='utf-8') as fi:
-#         noise_indexes = [x.split(' ')[-1] for x in fi.read().split('\n') if len(x) > 0]
-
-#     return clean_indexes, noise_indexes
 
 class Dataset(torch.utils.data.Dataset):
     def __init__(self, clean_indexes, noise_indexes, segment_size, split=True, shuffle=True, n_cache_reuse=1, device=None):
@@ -113,10 +80,6 @@ class Dataset(torch.utils.data.Dataset):
             noisy_audio = self.cached_noisy_wav
             self._cache_ref_count -= 1
         
-        # clean_audio, noisy_audio = torch.FloatTensor(clean_audio), torch.FloatTensor(noise_audio)
-        # norm_factor = torch.sqrt(len(noisy_audio) / torch.sum(noisy_audio ** 2.0))
-        # clean_audio = (clean_audio * norm_factor).unsqueeze(0)
-        # noisy_audio = (noisy_audio * norm_factor).unsqueeze(0)
         clean_audio = torch.tensor(clean_audio).unsqueeze(0)
         noisy_audio = torch.tensor(noise_audio).unsqueeze(0)
 

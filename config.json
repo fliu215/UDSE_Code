@@ -1,7 +1,7 @@
 {
-    "num_gpus": 2,
-    "batch_size": 2,
-    "learning_rate": 0.0001,
+    "num_gpus": 0,
+    "batch_size": 16,
+    "learning_rate": 0.0005,
     "adam_b1": 0.9,
     "adam_b2": 0.95,
     "lr_decay": 0.9,
@@ -13,9 +13,10 @@
     "beta": 2.0,
 
     "sampling_rate": 44100,
-    "segment_size": 80000,
+    "segment_size": 88200,
 
     "num_workers": 4,
+    "warmup_steps": 4000,
 
     "training_epochs":100,
     "stdout_interval":5,
@@ -24,12 +25,20 @@
     "validation_interval": 10000,
 
     "fs": 44100,
-    "input_train_clean_list": "./mnt230/data/voice_bank/clean_trainset_wav_44.1k",
-    "input_train_noise_list": "./mnt230/data/voice_bank/noisy_trainset_wav_44.1k",
-    "input_validation_clean_list": "./mnt230/data/voice_bank/clean_testset_wav_44.1k",
-    "input_validation_noise_list": "./mnt230/data/voice_bank/noisy_testset_wav_44.1k",
-    "checkpoint_path": "./mnt230/checkpoint/genhancer-44.1k-embedding_final_cut",
-    "checkpoint_file": "./mnt230/checkpoint/genhancer-44.1k-embedding_final_cut/g_00640000",
+    "input_train_clean_list": "/train/aiyang/data/voice_bank/clean_trainset_wav_44.1k",
+    "input_train_noise_list": "/train/aiyang/data/voice_bank/noisy_trainset_wav_44.1k",
+    "input_validation_clean_list": "/train/aiyang/data/voice_bank/clean_testset_wav_44.1k",
+    "input_validation_noise_list": "/train/aiyang/data/voice_bank/noisy_testset_wav_44.1k",
+    "checkpoint_path": "/train/aiyang/checkpoint/UDSE",
+    "checkpoint_file": "/train/aiyang/checkpoint/UDSE/g_00010000",
+
+    "ratio": 8,
+    "latent_dim": 32,
+    "num_mels": 80,
+    "n_fft": 1024,
+    "hop_size": 40,
+    "win_size": 320,
+    "num_mels_for_loss": 80,
 
     "dist_config": {
         "dist_backend": "nccl",

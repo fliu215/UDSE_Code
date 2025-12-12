@@ -1,0 +1,16 @@
+descript-audio-codec==1.0.0
+descript-audiotools==0.7.2
+einops==0.8.0
+librosa==0.9.2
+numpy==1.23.4
+pandas==2.1.4
+matplotlib==3.8.0
+rich==13.5.3
+soundfile==0.12.1
+tensorboard==2.11.2
+torch==2.0.1
+torchaudio==2.0.2
+torchvision==0.15.2
+tqdm==4.66.1
+trainer==0.0.36
+transformers==4.30.2

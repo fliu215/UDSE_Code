@@ -1,13 +1,11 @@
 import warnings
 warnings.simplefilter(action='ignore', category=FutureWarning)
-import itertools
 import os
 import dac
 import sys
 import time
 import torchaudio
 import argparse
-# import fairseq
 import json
 import torch
 import torch.nn.functional as F
@@ -16,9 +14,9 @@ from torch.utils.data import DistributedSampler, DataLoader
 import torch.multiprocessing as mp
 from torch.distributed import init_process_group
 from torch.nn.parallel import DistributedDataParallel
-from dataset import Dataset, get_dataset_filelist, mel_spectrogram
-from models import Parallel
-from utils import AttrDict, build_env, plot_spectrogram, scan_checkpoint, load_checkpoint, save_checkpoint
+from dataset import Dataset, get_dataset_filelist
+from models import UDSE
+from utils import AttrDict, build_env, scan_checkpoint, load_checkpoint, save_checkpoint
 from warmup import WarmupConstantSchedule
 
 torch.backends.cudnn.benchmark = True
@@ -32,15 +30,9 @@ def train(rank, a, h):
     torch.cuda.manual_seed(h.seed)
     device = torch.device('cuda:{:d}'.format(rank))
 
-    generator = Parallel()
-    dac_model_path = dac.utils.download(model_type="44khz")
-    dac_model = dac.DAC.load(dac_model_path)
+    generator = UDSE()
+    dac_model = dac.DAC.load('/home/aiyang/.cache/descript/dac/weights_44khz_8kbps_0.0.1.pth')
     dac_model.to(device)
-    # cp_path = '/home/aiyang/Genhancer/fairseq/libri960_big.pt'
-    # ssl_model, cfg, task = fairseq.checkpoint_utils.load_model_ensemble_and_task([cp_path])
-    # ssl_model = ssl_model[0]
-    # ssl_model.remove_pretraining_modules()
-    # ssl_model.to(device)
 
 
     if rank == 0:
@@ -73,13 +65,10 @@ def train(rank, a, h):
         generator = DistributedDataParallel(generator, device_ids=[rank]).to(device)
 
     optim_g = torch.optim.AdamW(generator.parameters(), h.learning_rate, betas=[h.adam_b1, h.adam_b2])
-
+    warmup_scheduler = WarmupConstantSchedule(optim_g, warmup_steps=h.warmup_steps)
+    scheduler_g = torch.optim.lr_scheduler.CosineAnnealingLR(optim_g, T_max=h.training_epochs, eta_min=0.00001, last_epoch=last_epoch)
     if state_dict_do is not None:
         optim_g.load_state_dict(state_dict_do['optim_g'])
-
-    # scheduler_g = torch.optim.lr_scheduler.ExponentialLR(optim_g, gamma=h.lr_decay, last_epoch=last_epoch)
-    warmup_scheduler = WarmupConstantSchedule(optim_g, warmup_steps=4000)
-    scheduler_g = torch.optim.lr_scheduler.CosineAnnealingLR(optim_g, T_max=100, eta_min=0.00001, last_epoch=last_epoch)
 
     training_clean_indexes, training_noise_indexes = get_dataset_filelist(h.input_train_clean_list, h.input_train_noise_list)
     validation_clean_indexes, validation_noise_indexes = get_dataset_filelist(h.input_validation_clean_list, h.input_validation_noise_list)
@@ -108,9 +97,6 @@ def train(rank, a, h):
 
     generator.train()
     dac_model.eval()
-    torch.cuda.empty_cache()
-    torch.cuda.empty_cache()
-    torch.cuda.empty_cache()
 
     for epoch in range(max(0, last_epoch), h.training_epochs):
         if rank == 0:
@@ -125,13 +111,8 @@ def train(rank, a, h):
             if rank == 0:
                 start_b = time.time()
             clean_audio, mix_audio = batch
-            clean_audio = torch.autograd.Variable(clean_audio.to(device, non_blocking=True))
-            mix_audio = torch.autograd.Variable(mix_audio.to(device, non_blocking=True))
-
-            # wav = mix_audio.cpu()
-            # wav = torchaudio.transforms.Resample(orig_freq=44100, new_freq=16000)(wav).to(device)
-            # res = ssl_model(wav, mask=False, features_only=True)
-            # ssl_feature = res['x']
+            clean_audio = clean_audio.to(device, non_blocking=True)
+            mix_audio = mix_audio.to(device, non_blocking=True)
 
             clean_audio = clean_audio.unsqueeze(1)
             mix_audio = mix_audio.unsqueeze(1)
@@ -141,39 +122,25 @@ def train(rank, a, h):
             clean_token = clean_token_dac.permute(0,2,1)
             clean_token_loss = [clean_token[:,:,k].reshape(-1) for k in range(h.num_quantize)]
             
-            
             dac_in = dac_model.preprocess(mix_audio, h.sampling_rate)
             _, _, latents, _, _ = dac_model.encode(dac_in)
             dac_noisy = latents.permute(0,2,1)
 
             B, T, _ = dac_noisy.size()
-            # ssl_feature = torch.nn.functional.interpolate(ssl_feature.permute(0,2,1), size=(T,), mode='linear', align_corners=True).permute(0,2,1)
             initial_embed = torch.rand((B, T, 1024)).to(device)   
             input_list = [initial_embed]
             for i in range(h.num_quantize-1):
                 input_embed, _, _ = dac_model.quantizer.from_codes(clean_token_dac[:,:i+1,:])
                 input_list.append(input_embed.permute(0,2,1))
             prob = generator(input_list, dac_noisy)
-            prob_list = torch.cat(prob, dim=-1)
-            token_g = prob_list
-            
-            
-            token_g = token_g.reshape(B, T, -1, h.codebook_size)
-            token_g = F.softmax(token_g, dim=-1)
-            token_g = torch.argmax(token_g, dim=-1).permute(0,2,1)
-            z, _, _ = dac_model.quantizer.from_codes(token_g)
-            audio_g = dac_model.decode(z)
-            mel_1 = mel_spectrogram(clean_in.squeeze(1))
-            mel_2 = mel_spectrogram(audio_g.squeeze(1))
+
             # Generator
             optim_g.zero_grad()
-            loss_mel = F.l1_loss(mel_1, mel_2)
             loss_list = []
             for i in range(h.num_quantize):
                 loss_c = F.cross_entropy(prob[i].reshape(-1, h.codebook_size) / 0.1, clean_token_loss[i])
                 loss_list.append(loss_c)
-            loss_cross = loss_list[0]+loss_list[1]+loss_list[2]+loss_list[3]+loss_list[4]+loss_list[5]+loss_list[6]+loss_list[7]+loss_list[8]
-            loss = loss_cross / 9
+            loss = sum(loss_list) / h.num_quantize
             loss.backward()
             optim_g.step()
 
@@ -185,9 +152,8 @@ def train(rank, a, h):
                         Q2_error = loss_list[1].item()
                         Q3_error = loss_list[2].item()
                         Q4_error = loss_list[3].item()
-                        mel_error = loss_mel.item()
-                    print('Steps : {:d}, Gen Loss: {:4.3f}, Q1 Loss: {:4.3f}, Q2 Loss: {:4.3f}, Q3 Loss: {:4.3f}, Q4 Loss: {:4.3f}, Mel Loss: {:4.3f}, s/b : {:4.3f}'.
-                           format(steps, loss, Q1_error, Q2_error, Q3_error, Q4_error, mel_error, time.time() - start_b))
+                    print('Steps : {:d}, Gen Loss: {:4.3f}, Q1 Loss: {:4.3f}, Q2 Loss: {:4.3f}, Q3 Loss: {:4.3f}, Q4 Loss: {:4.3f}, s/b : {:4.3f}'.
+                           format(steps, loss, Q1_error, Q2_error, Q3_error, Q4_error, time.time() - start_b))
 
                 # checkpointing
                 if steps % h.checkpoint_interval == 0 and steps != 0:
@@ -211,19 +177,12 @@ def train(rank, a, h):
                 # Validation
                 if steps % h.validation_interval == 0 and steps != 0:
                     generator.eval()
-                    torch.cuda.empty_cache()
                     val_cross_err_tot = 0
-                    val_mel_err_tot = 0
                     with torch.no_grad():
                         for j, batch in enumerate(validation_loader):
                             clean_audio, mix_audio = batch
-                            clean_audio = torch.autograd.Variable(clean_audio.to(device, non_blocking=True))
-                            mix_audio = torch.autograd.Variable(mix_audio.to(device, non_blocking=True))
-                
-                            # wav = mix_audio.cpu()
-                            # wav = torchaudio.transforms.Resample(orig_freq=44100, new_freq=16000)(wav).to(device)
-                            # res = ssl_model(wav, mask=False, features_only=True)
-                            # ssl_feature = res['x']
+                            clean_audio = clean_audio.to(device, non_blocking=True)
+                            mix_audio = mix_audio.to(device, non_blocking=True)
                 
                             clean_audio = clean_audio.unsqueeze(1)
                             mix_audio = mix_audio.unsqueeze(1)
@@ -239,43 +198,24 @@ def train(rank, a, h):
                             dac_noisy = latents.permute(0,2,1)
 
                             B, T, _ = dac_noisy.size()
-                            # ssl_feature = torch.nn.functional.interpolate(ssl_feature.permute(0,2,1), size=(T,), mode='linear', align_corners=True).permute(0,2,1)
                             initial_embed = torch.rand((B, T, 1024)).to(device)   
                             input_list = [initial_embed]
                             for i in range(h.num_quantize-1):
                                 input_embed, _, _ = dac_model.quantizer.from_codes(clean_token_dac[:,:i+1,:])
                                 input_list.append(input_embed.permute(0,2,1))
                             prob = generator(input_list, dac_noisy)
-                            prob_list = torch.cat(prob, dim=-1)
-                            token_g = prob_list
 
-
-                            token_g = token_g.reshape(B, T, -1, h.codebook_size)
-                            token_g = F.softmax(token_g, dim=-1)
-                            token_g = torch.argmax(token_g, dim=-1).permute(0,2,1)
-                            z, _, _ = dac_model.quantizer.from_codes(token_g)
-                            audio_g = dac_model.decode(z)
-                            mel_1 = mel_spectrogram(clean_in.squeeze(1))
-                            mel_2 = mel_spectrogram(audio_g.squeeze(1))
-
-                            loss_time = F.l1_loss(mel_1, mel_2)
                             loss_list = []
                             for i in range(h.num_quantize):
                                 loss_c = F.cross_entropy(prob[i].reshape(-1, h.codebook_size) / 0.1, clean_token_loss[i])
                                 loss_list.append(loss_c)
-                            loss_cross = loss_list[0]+loss_list[1]+loss_list[2]+loss_list[3]+loss_list[4]+loss_list[5]+loss_list[6]+loss_list[7]+loss_list[8]
-                            loss_cross = loss_cross / 9
-
+                            loss_cross = sum(loss_list) / h.num_quantize
                             val_cross_err_tot += loss_cross.item()
-                            val_mel_err_tot += loss_time.item()
                             
 
                         val_cross_err = val_cross_err_tot / (j+1)
-                        val_mel_err = val_mel_err_tot / (j+1)
 
-                        sw.add_scalar("Validation/Cross Loss", val_cross_err, steps)
-                        sw.add_scalar("Validation/Mel Loss", val_mel_err, steps)
-                    
+                        sw.add_scalar("Validation/Generator Loss", val_cross_err, steps)
                     generator.train()
             steps += 1
             if epoch == 0:
