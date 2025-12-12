@@ -25,19 +25,16 @@
     "validation_interval": 10000,
 
     "fs": 44100,
-    "input_train_clean_list": "/train/aiyang/data/voice_bank/clean_trainset_wav_44.1k",
-    "input_train_noise_list": "/train/aiyang/data/voice_bank/noisy_trainset_wav_44.1k",
-    "input_validation_clean_list": "/train/aiyang/data/voice_bank/clean_testset_wav_44.1k",
-    "input_validation_noise_list": "/train/aiyang/data/voice_bank/noisy_testset_wav_44.1k",
-    "checkpoint_path": "/train/aiyang/checkpoint/UDSE",
-    "checkpoint_file": "/train/aiyang/checkpoint/UDSE/g_00010000",
+    "input_train_clean_list": "voice_bank/clean_trainset_wav_44.1k",
+    "input_train_noise_list": "voice_bank/noisy_trainset_wav_44.1k",
+    "input_validation_clean_list": "voice_bank/clean_testset_wav_44.1k",
+    "input_validation_noise_list": "voice_bank/noisy_testset_wav_44.1k",
+    "checkpoint_path": "checkpoint/UDSE",
+    "checkpoint_file": "checkpoint/UDSE/g_00010000",
 
     "ratio": 8,
     "latent_dim": 32,
     "num_mels": 80,
-    "n_fft": 1024,
-    "hop_size": 40,
-    "win_size": 320,
     "num_mels_for_loss": 80,
 
     "dist_config": {
