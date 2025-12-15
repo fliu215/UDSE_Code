@@ -1,5 +1,6 @@
 # Universal Discrete-Domain Speech Enhancement
 ### Fei Liu, Yang Ai, Ye-Xin Lu, Rui-Chen Zheng, Hui-Peng Du, Zhen-Hua Ling
+#### Published in IEEE Transactions on Audio, Speech, and Language Processing
 [![arXiv](https://img.shields.io/badge/arXiv-2510.09974-brightgreen.svg?style=flat-square)](https://arxiv.org/abs/2510.09974)  
 
 **Abstract:** 
@@ -42,3 +43,11 @@ CUDA_VISIBLE_DEVICES=0 python inference.py --test_noise_wav your/path --output_d
 ```
 
 ## Citation
+```
+@article{liu2025universal,
+  title={Universal Discrete-Domain Speech Enhancement},
+  author={Liu, Fei and Ai, Yang and Lu, Ye-Xin and Zheng, Rui-Chen and Du, Hui-Peng and Ling, Zhen-Hua},
+  journal={IEEE Transactions on Audio, Speech, and Language Processing},
+  year={2025}
+}
+```
