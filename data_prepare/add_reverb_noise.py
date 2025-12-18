@@ -14,10 +14,10 @@ def get_all_audio_files(root_dir, exts=(".wav", ".flac")):
         audio_files.extend(glob.glob(os.path.join(root_dir, "**", f"*{ext}"), recursive=True))
     return sorted(audio_files)
 
-wav_dir = 'data/Medley-solos-DB/train_16k'
-rir_dir = 'data/dataset_reverb_16k/RIR_files'
-noise_dir = '/train/aiyang/DEMAND-16k/train'
-output = 'data/Medley-solos-DB/n_train_16k'
+wav_dir = 'data/train'
+rir_dir = 'data/RIR_files/train'
+noise_dir = 'data/DEMAND/train'
+output = 'data/noisy_train'
 os.makedirs(output, exist_ok=True)
 wav_index = get_all_audio_files(wav_dir)
 rir_index = os.listdir(rir_dir)
