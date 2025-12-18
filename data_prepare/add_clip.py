@@ -31,8 +31,8 @@ def clipping(speech_sample, min_quantile: float = 0.0, max_quantile: float = 0.9
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--clean_wav_dir', default='/train/aiyang/data/voice_bank/trainset_reverb_noisy_48k')
-    parser.add_argument('--output_dir', default='/train/aiyang/data/voice_bank/clip_trainset_rnclip_48k')
+    parser.add_argument('--clean_wav_dir', default='voice_bank/train')
+    parser.add_argument('--output_dir', default='voice_bank/clip_train')
     args = parser.parse_args()
 
     input_lists = os.listdir(args.clean_wav_dir)
