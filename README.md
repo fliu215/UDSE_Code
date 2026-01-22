@@ -14,7 +14,7 @@ Finally, the predicted clean tokens from all VQs are decoded to reconstruct the 
 Experimental results confirm that the proposed UDSE model can effectively enhance speech degraded by various conventional and unconventional distortions, e.g., additive noise, reverberation, band limitation, clipping, phase distortion, and compression distortion, as well as their combinations. 
 These results demonstrate the superior universality and practicality of UDSE compared to advanced regression-based SE methods.
 
-**We provide our implementation as open source in this repository. Audio samples can be found at the [demo website](https://fliu215.github.io/UDSE/).**
+**Audio samples can be found at the [demo website](https://fliu215.github.io/UDSE/).**
 
 ## Model Structure
 ### Train
