@@ -47,7 +47,10 @@ CUDA_VISIBLE_DEVICES=0 python inference.py --test_noise_wav your/path --output_d
 @article{liu2025universal,
   title={Universal Discrete-Domain Speech Enhancement},
   author={Liu, Fei and Ai, Yang and Lu, Ye-Xin and Zheng, Rui-Chen and Du, Hui-Peng and Ling, Zhen-Hua},
-  journal={IEEE Transactions on Audio, Speech, and Language Processing},
-  year={2025}
+  journal={IEEE Transactions on Audio, Speech and Language Processing},
+  volume={34},
+  pages={285--298},
+  year={2025},
+  publisher={IEEE}
 }
 ```
