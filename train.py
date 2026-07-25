@@ -117,21 +117,23 @@ def train(rank, a, h):
             clean_audio = clean_audio.unsqueeze(1)
             mix_audio = mix_audio.unsqueeze(1)
 
-            clean_in = dac_model.preprocess(clean_audio, h.sampling_rate)
-            _, clean_token_dac, _, _, _ = dac_model.encode(clean_in)    # (B,Q,T)
-            clean_token = clean_token_dac.permute(0,2,1)
-            clean_token_loss = [clean_token[:,:,k].reshape(-1) for k in range(h.num_quantize)]
+            with torch.no_grad():
+                clean_in = dac_model.preprocess(clean_audio, h.sampling_rate)
+                _, clean_token_dac, _, _, _ = dac_model.encode(clean_in)    # (B,Q,T)
+                clean_token = clean_token_dac.permute(0,2,1)
+                clean_token_loss = [clean_token[:,:,k].reshape(-1) for k in range(h.num_quantize)]
             
-            dac_in = dac_model.preprocess(mix_audio, h.sampling_rate)
-            _, _, latents, _, _ = dac_model.encode(dac_in)
-            dac_noisy = latents.permute(0,2,1)
+                dac_in = dac_model.preprocess(mix_audio, h.sampling_rate)
+                _, _, latents, _, _ = dac_model.encode(dac_in)
+                dac_noisy = latents.permute(0,2,1)
 
-            B, T, _ = dac_noisy.size()
-            initial_embed = torch.rand((B, T, 1024)).to(device)   
-            input_list = [initial_embed]
-            for i in range(h.num_quantize-1):
-                input_embed, _, _ = dac_model.quantizer.from_codes(clean_token_dac[:,:i+1,:])
-                input_list.append(input_embed.permute(0,2,1))
+                B, T, _ = dac_noisy.size()
+                initial_embed = torch.rand((B, T, 1024)).to(device)   
+                input_list = [initial_embed]
+                for i in range(h.num_quantize-1):
+                    input_embed, _, _ = dac_model.quantizer.from_codes(clean_token_dac[:,:i+1,:])
+                    input_list.append(input_embed.permute(0,2,1))
+            
             prob = generator(input_list, dac_noisy)
 
             # Generator
